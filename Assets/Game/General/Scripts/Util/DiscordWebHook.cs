@@ -17,6 +17,7 @@ public class DiscordWebHook
         machineName = machineNameToDiscord.ContainsKey(machineName) ? 
                       machineNameToDiscord[machineName] : machineName;
         SendHook($"{machineName}", $":red_circle: {machineName} Logged off Unity");
+        EditorPrefs.SetBool("FirstInitDone", false);
     }
 
     static void OpenMsg()
@@ -44,14 +45,14 @@ public class DiscordWebHook
     static DiscordWebHook()
     {
         EditorApplication.quitting += QuitMsg;
- 
-        if (!SessionState.GetBool("FirstInitDone", false))
+        
+        if (!EditorPrefs.GetBool("FirstInitDone", false))
         {
             Debug.Log("Sending webhook...");
             InitDictionary();
             OpenMsg();
          
-            SessionState.SetBool("FirstInitDone", true);
+            EditorPrefs.SetBool("FirstInitDone", true);
         }
            
         
