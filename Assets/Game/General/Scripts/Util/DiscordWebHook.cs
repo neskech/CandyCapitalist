@@ -10,7 +10,7 @@ public class DiscordWebHook
 {   
     const string WEB_HOOK_URL = "https://discord.com/api/webhooks/1071936469985402960/yfmNTypC5HIWT5_eurBQaZxkEfh7xISeEV-aGn7vU62CpxkElecHuZBTAcQ5W8AT16Wn";
     static Dictionary<string, string> machineNameToDiscord;
-
+ 
     static void QuitMsg()
     {
         string machineName = System.Environment.MachineName;
