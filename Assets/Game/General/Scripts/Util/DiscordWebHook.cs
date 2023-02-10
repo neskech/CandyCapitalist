@@ -27,7 +27,7 @@ public class DiscordWebHook
                       machineNameToDiscord[machineName] : machineName;
         SendHook($"{machineName}", $":green_circle: {machineName} Logged on Unity");
     }
-
+ 
     static void InitDictionary()
     {
         machineNameToDiscord = new Dictionary<string, string>(){
@@ -44,12 +44,12 @@ public class DiscordWebHook
 
     static DiscordWebHook()
     {
+        InitDictionary();
         EditorApplication.quitting += QuitMsg;
-        
+
         if (!EditorPrefs.GetBool("FirstInitDone", false))
         {
             Debug.Log("Sending webhook...");
-            InitDictionary();
             OpenMsg();
          
             EditorPrefs.SetBool("FirstInitDone", true);
