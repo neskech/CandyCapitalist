@@ -150,8 +150,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 400598317}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: -0.0069, z: 0}
+  m_LocalScale: {x: 1, y: 1.0004, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1418943830}
@@ -10505,7 +10505,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: 0, y: 0, z: 0}
   m_Size: {x: 32, y: 32, z: 1}
-  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
+  m_TileAnchor: {x: 0, y: 0, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1
@@ -10861,7 +10861,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: 0, y: 0, z: -1}
   m_Size: {x: 34, y: 33, z: 3}
-  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
+  m_TileAnchor: {x: 0, y: 0, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1
@@ -10892,7 +10892,8 @@ GameObject:
   - component: {fileID: 944146287}
   - component: {fileID: 944146286}
   - component: {fileID: 944146290}
-  m_Layer: 0
+  - component: {fileID: 944146291}
+  m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10999,6 +11000,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _speed: 3
+--- !u!61 &944146291
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 944146285}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1, y: 1}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1}
+  m_EdgeRadius: 0
 --- !u!1 &1322374959
 GameObject:
   m_ObjectHideFlags: 0
@@ -11304,7 +11331,7 @@ Tilemap:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Origin: {x: 0, y: 0, z: 0}
   m_Size: {x: 32, y: 22, z: 2}
-  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
+  m_TileAnchor: {x: 0, y: 0, z: 0}
   m_TileOrientation: 0
   m_TileOrientationMatrix:
     e00: 1
@@ -11383,10 +11410,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b2ddf99e5115484b8f0c3a2c2781695, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _tileDimensions: 2
+  _tileDimensions: 1
   _drawGizmos: 0
-  _autoUpdate: 0
-  _colliderHeightRange: {x: -1, y: 1}
+  _autoUpdate: 1
 --- !u!1 &1978946848
 GameObject:
   m_ObjectHideFlags: 0
@@ -11466,7 +11492,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1978946848}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 0, y: 10, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11515,12 +11541,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1978946848}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 604bc99cd29ec4b8faf67346a4dc649f, type: 3}
+  m_Script: {fileID: 11500000, guid: 90cd7cf244f864b68b815cabfa8cada5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _target: {fileID: 944146288}
-  _followSpeed: 3
-  _cameraBoundsY: -5
-  _cameraBoundsX: -5
-  _renderGizmos: 1
-  tileMapBaseLayer: {fileID: 400598317}
+  _followSpeed: 1
+  _jumpToFocusSpeed: 10
+  _focusableMask:
+    serializedVersion: 2
+    m_Bits: 64
+  _scrollSpeed: 1
+  _zoomSpeed: 50
+  _minShakeRadius: 0.05
+  _maxShakeRadius: 0.1
+  _shakeSpeed: 5
+  _shakeDuration: 5

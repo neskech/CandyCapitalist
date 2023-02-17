@@ -22,11 +22,13 @@ public enum Heuristic
 
 public class AStar 
 {
-    public Result<Path, PathNotFoundError> FindPath(TileData[,] map, Vector2Int start, 
-                                                    Vector2Int end, bool allowDiagonals)
+    public Result<Path, PathNotFoundError> FindPath(TileData[,] map, Vector2Int start, Vector2Int end, 
+                                                    int maxZDelta, bool allowDiagonals)
     {
         Queue<Vector2Int> q = new Queue<Vector2Int>();
-
+        //TODO max Z Delta determines the HEIGHT the agent can step
+        //TODO so if my current tile has z index 0 and the next in the path has z index 10 
+        //TODO then the delta is 10. If my max allowable delta is 6 then we can't make that jump
         return Err<Path, PathNotFoundError>(new PathNotFoundError());
     }
 

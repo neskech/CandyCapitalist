@@ -78,3 +78,6 @@ crashlytics-build.properties
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# Discord Webhook Secret
+Webhook.json

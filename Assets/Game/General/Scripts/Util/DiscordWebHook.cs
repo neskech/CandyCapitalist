@@ -1,50 +1,53 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.IO;
 using System.Net;
 using UnityEngine;
 using UnityEditor;
+using Option;
+using static Option.Option;
 
 [InitializeOnLoad]
 public class DiscordWebHook
 {   
-    const string WEB_HOOK_URL = "https://discord.com/api/webhooks/1071936469985402960/yfmNTypC5HIWT5_eurBQaZxkEfh7xISeEV-aGn7vU62CpxkElecHuZBTAcQ5W8AT16Wn";
-    static Dictionary<string, string> machineNameToDiscord;
-    
+    [System.Serializable]
+    struct WebHookData {
+        public string url;
+        public string name;
+    }
+
+    static Option<string> _webhookURL = None<string>();
+    static Option<string> _username = None<string>();
     static void QuitMsg()
     {
-        string machineName = System.Environment.MachineName;
-        machineName = machineNameToDiscord.ContainsKey(machineName) ? 
-                      machineNameToDiscord[machineName] : machineName;
-        SendHook($"{machineName}", $":red_circle: {machineName} Logged off Unity");
+        SendHook($":red_circle: {_username.UnwrapOr("Unkown user")} Logged off Unity");
         EditorPrefs.SetBool("FirstInitDone", false);
     }
 
     static void OpenMsg()
     {
-        string machineName = System.Environment.MachineName;
-        machineName = machineNameToDiscord.ContainsKey(machineName) ? 
-                      machineNameToDiscord[machineName] : machineName;
-        SendHook($"{machineName}", $":green_circle: {machineName} Logged on Unity");
+        SendHook($":green_circle: {_username.UnwrapOr("Unkown user")} Logged onto Unity");
     }
  
-    static void InitDictionary()
+    static void Init()
     {
-        machineNameToDiscord = new Dictionary<string, string>(){
-            {
-                "ness", //1
-                "Craig"
-            },
-            {
-                "DESKTOP-GHJOATP", //2
-                "Daniel"
-            },
-        };
+       string root = Application.dataPath;
+       string path = $"{root}/../Webhook.json";
+
+       if (!File.Exists(path)) return;
+
+       string fileData = File.ReadAllText(path);
+       WebHookData data = JsonUtility.FromJson<WebHookData>(fileData);
+
+       _webhookURL = Some<string>(data.url); 
+       if (data.name.Length > 0)
+            _username = Some<string>(data.name);
     }
 
     static DiscordWebHook()
     {
-        InitDictionary();
+        Init();
         EditorApplication.quitting += QuitMsg;
 
         if (!EditorPrefs.GetBool("FirstInitDone", false))
@@ -58,9 +61,11 @@ public class DiscordWebHook
         
     }
 
-    static void SendHook(string username, string msg)
+    static void SendHook(string msg)
     {
-        Post(WEB_HOOK_URL, new System.Collections.Specialized.NameValueCollection(){
+        if (_webhookURL.IsNone()) return;
+
+        Post(_webhookURL.Unwrap(), new System.Collections.Specialized.NameValueCollection(){
             {
                 "content",
                  msg
