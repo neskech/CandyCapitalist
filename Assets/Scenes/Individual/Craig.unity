@@ -156,14 +156,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _target: {fileID: 205570498}
-  _followSpeed: 1
+  _followSpeed: 3
   _jumpToFocusSpeed: 10
   _focusableMask:
     serializedVersion: 2
     m_Bits: 64
-  _allowFreeLook: 0
+  _allowFreeLook: 1
   _scrollSpeed: 1
-  _allowZoom: 0
+  _allowZoom: 1
   _zoomSpeed: 50
   _minShakeRadius: 0.05
   _maxShakeRadius: 0.1

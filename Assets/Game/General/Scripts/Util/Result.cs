@@ -1,7 +1,7 @@
 using System;
 using static Result;
 
-struct UnitType { };
+public struct UnitType { };
 
 public abstract record ResultType();
 public record Ok<T>(T Value) : ResultType;

@@ -15,11 +15,11 @@ public class TileData
     public Vector3 WorldPosCenter {get => _worldPosCenter;}
     public Vector3Int Index {get => _index;}
 
-    public TileData(Vector3 worldPosCenter_, Vector3Int index_,  TileType type_) 
+    public TileData(Vector3 worldPosCenter, Vector3Int index,  TileType type) 
     {
-        _worldPosCenter = worldPosCenter_;
-        _index = index_;
-        _type = type_;
+        _worldPosCenter = worldPosCenter;
+        _index = index;
+        _type = type;
     }
 
      public TileData(Vector3 worldPosCenter_, Vector3Int index_) 

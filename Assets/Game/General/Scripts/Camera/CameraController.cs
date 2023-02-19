@@ -54,7 +54,10 @@ public class CameraController : MonoBehaviour
         if (_instance != null)
             Destroy(this.gameObject);
         else
+        {
             _instance = this;
+            Init();
+        }
     }
 
     void Init()

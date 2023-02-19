@@ -1460,7 +1460,7 @@ TextureImporter:
     secondaryTextures: []
     nameFileIdTable:
       walk_21: -2036730595
-      walk_62: 1210051007
+      walk_47: -667881882
       walk_10: 1502513907
       walk_11: 1996981449
       walk_17: 1380841042
@@ -1496,11 +1496,11 @@ TextureImporter:
       walk_28: -1996475636
       walk_52: 448328356
       walk_1: -639602026
-      walk_9: -965483395
       walk_25: -529541236
+      walk_36: -1205619614
+      walk_9: -965483395
       walk_14: 1029607527
       walk_31: -2111175342
-      walk_36: -1205619614
       walk_63: 692982093
       walk_0: 1080836174
       walk_43: 1781970344
@@ -1512,16 +1512,16 @@ TextureImporter:
       walk_29: -699755900
       walk_13: 508801115
       walk_20: -635121295
+      walk_62: 1210051007
       walk_8: -282610278
-      walk_44: -388799298
       walk_48: 1708926635
       walk_34: 380976495
       walk_4: 1071281439
+      walk_44: -388799298
       walk_27: -583735099
-      walk_47: -667881882
       walk_42: 2144251414
-      walk_16: 1414990659
       walk_23: -1266830485
+      walk_16: 1414990659
       walk_57: -2020488639
   spritePackingTag: 
   pSDRemoveMatte: 0
