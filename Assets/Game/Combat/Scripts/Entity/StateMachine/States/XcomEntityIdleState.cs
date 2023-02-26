@@ -9,7 +9,7 @@ public class XcomEntityIdleState : XcomEntityState
         Debug.Log("Entered Idle State!");
     }
 
-    public override void Update(Action action)
+    public override void Update(Action action, Transform entity)
     {
         _actionQueue.Enqueue(action);
 
@@ -24,6 +24,6 @@ public class XcomEntityIdleState : XcomEntityState
 
     public override void OnExit()
     {
-        Notify(EntityState.Idle);
+        
     }
 }

@@ -1,9 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class XcomEnemyController : MonoBehaviour, IXcomCharacterController
 {
+    XcomEntityStateMachine _stateMachine;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -15,18 +18,21 @@ public class XcomEnemyController : MonoBehaviour, IXcomCharacterController
     {
         
     }
-    public void EnterCoroutine(IEnumerator coroutine)
+
+    public List<Action> GetActions()
     {
-        throw new System.NotImplementedException();
+        return null;
     }
 
-    public Vector2Int GetPosition()
+    public void TakeTurn(List<Action> actions)
     {
-        throw new System.NotImplementedException();
+        throw new NotImplementedException();
     }
 
     public void TakeDamage(float damage)
     {
-        throw new System.NotImplementedException();
+        throw new NotImplementedException();
     }
+
+    public bool IsTurnOver() => _stateMachine.IsTurnOver();
 }

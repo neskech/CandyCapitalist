@@ -41,6 +41,7 @@ public class CameraController : MonoBehaviour
     Camera _cam;
 
     //properties
+    public void AllowFreeLook(bool allow) => _allowFreeLook = allow;
     public Transform Target {get => _target;}
     public Camera Camera {get => _cam;}
     public static CameraController Instance {get => _instance;}
@@ -213,115 +214,19 @@ public class CameraController : MonoBehaviour
         _isJumpingToFocus = false;
     }
 
-    IEnumerator CameraShake()
+    public void JumpFocusTo(Transform transform)
     {
-        _isShaking = true;
-
-        const float DELTA = 0.01f;
-
-        float elapsedTime = 0.0f;
-        Vector2 origin = transform.position;
-
-        /*
-            We don't want to loop forever if our camera tries to move
-            out of bounds
-        */
-        Vector2 prevPos = origin; 
-
-        while (elapsedTime < _shakeDuration)
-        {
-            float dist = Vector2.Distance(origin, transform.position);
-
-            if (dist < 0.1f)
-            {
-                float angle = Random.Range(0, 360) * Mathf.Deg2Rad;
-                Vector2 direc = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-                Vector2 translation = Random.Range(_minShakeRadius, _maxShakeRadius) *
-                                      direc;
-
-                transform.Translate(translation);
-            }
-
-            Vector3 res = Vector2.Lerp(transform.position, origin, _shakeSpeed * Time.deltaTime);;
-            res.z = _cameraZ;
-
-            elapsedTime += Time.deltaTime;
-
-            if (Vector2.Distance(transform.position, prevPos) < DELTA) break;
-            prevPos = transform.position;
-
-            yield return null;
-        }
-
-        prevPos = origin; 
-
-        //return back
-        while (Vector2.Distance(origin, transform.position) > DELTA)
-        {
-             Vector3 res = Vector2.Lerp(transform.position, origin, _shakeSpeed * Time.deltaTime);
-             res.z = _cameraZ;
-             transform.position = res;
-
-             if (Vector2.Distance(transform.position, prevPos) < DELTA) break;
-             prevPos = transform.position;
-
-             yield return null;
-        }
-
-        _isShaking = false;
+        //TODO if calling this from turnManager will want to wait the coroutine
+        _target = transform;
+        StartCoroutine(JumpToFocus());
     }
 
-    IEnumerator CameraShake2()
+    public void ReleaseFocus()
     {
-        _isShaking = true;
-
-        const float DELTA = 0.01f;
-
-        float elapsedTime = 0.0f;
-        Vector2 origin = transform.position;
-
-        /*
-            We don't want to loop forever if our camera tries to move
-            out of bounds
-        */
-        Vector2 prevPos = origin; 
-
-        while (elapsedTime < _shakeDuration)
-        {
-            float dist = Vector2.Distance(origin, transform.position);
-            float x = Random.Range(-1, 1);
-            float y = Random.Range(-1, 1);
-            Vector2 offset = new Vector2(x, y).normalized * _minShakeRadius;
-
-            Vector3 res = offset;
-            res.z = _cameraZ;
-            transform.position = res;
-
-            elapsedTime += Time.deltaTime;
-
-            if (Vector2.Distance(transform.position, prevPos) < DELTA) break;
-            prevPos = transform.position;
-
-            yield return null;
-        }
-
-        prevPos = origin; 
-
-        //return back
-        while (Vector2.Distance(origin, transform.position) > DELTA)
-        {
-             Vector3 res = Vector2.Lerp(transform.position, origin, _shakeSpeed * Time.deltaTime);
-             res.z = _cameraZ;
-             transform.position = res;
-
-             if (Vector2.Distance(transform.position, prevPos) < DELTA) break;
-             prevPos = transform.position;
-
-             yield return null;
-        }
-
-        _isShaking = false;
+        _onFocus = false;
     }
+
+    public bool IsJumpingFocus() => _isJumpingToFocus;
 
     void OnDrawGizmos()
     {

@@ -71,7 +71,7 @@ public static class AStar
         while (q.Count != 0)
         {
             Node curr = q.Dequeue();
-            
+
             explored.Add(curr);
             frontier.Remove(curr);
 
@@ -84,8 +84,13 @@ public static class AStar
             foreach (Option<Node> adj in adjacents)
             {
                 if (adj.IsNone() || explored.Contains(adj.Unwrap())) continue;
-
+                
                 Node n = adj.Unwrap();
+
+                int zDelta = Mathf.Abs(curr.data.Index.z - adj.Unwrap().data.Index.z);
+                if (zDelta >= MAX_Z_DELTA) continue;
+
+
                 if (frontier.Contains(n))
                 {
                     float newCost = curr.cost + 1 + GetHeuristic(n.data.Index.xy2D(), end, HEURISTIC);
@@ -101,15 +106,8 @@ public static class AStar
                     n.cost = curr.cost + 1 + GetHeuristic(n.data.Index.xy2D(), end, HEURISTIC);
                     n.parent = Some<Node>(curr);
                 }
-
-                //TODO check if in queue. If so, check if total cost + herusistic 
-                //TODO < cost of node in queue. If so replace parent pointer
-                //TODO else if not in queue, just add to frontier and add parent pointer
-
-                //TODO removing and adding back elems to the queue would make this n^2
-                //TODO perhaps hashset of Nodes to see what's in the queue
-                //TODO but then adding to queue (replacing an element) would have to be logn
             }
+            
         }
 
 

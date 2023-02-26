@@ -40,6 +40,9 @@ public class TileMaster : MonoBehaviour
     public Vector3 CellSize {get => _maps[(int)TileMapType.BaseLayer].cellSize;}
     public BoundsInt CellBounds {get => _maps[(int)TileMapType.BaseLayer].cellBounds;}
     public int TileDimensions {get => _tileDimensions;}
+    public Vector3Int WorldToCellInt(Vector3 world) => Instance._maps[(int)TileMapType.BaseLayer].WorldToCell(world);
+    public TileData[,] TileMapGrid => _tiles;
+
 
     TileMaster() 
     {
@@ -73,6 +76,7 @@ public class TileMaster : MonoBehaviour
 
     void SetupTileMaps()
     {
+        int count = 0;
         foreach (Transform child in transform)
         {
             Tilemap map = child.GetComponent<Tilemap>();
@@ -91,10 +95,11 @@ public class TileMaster : MonoBehaviour
                     default: 
                         break;
                 }
+                count++;
             }
         }
 
-        if (_maps.Length != (int) TileMapType.NUM_CLASSES)
+        if (count < (int) TileMapType.NUM_CLASSES)
             throw new System.Exception($"Required tile maps not met. Current are {_maps}");
     }
 
@@ -123,7 +128,7 @@ public class TileMaster : MonoBehaviour
                                         $"Has min z: {baseLayer.cellBounds.zMin} and max z:" + 
                                         $"{baseLayer.cellBounds.zMax}");
 
-        _tiles = new TileData[ height / _tileDimensions, width / _tileDimensions];
+        _tiles = new TileData[height / _tileDimensions, width / _tileDimensions];
 
         SetupBaseLayer(baseLayer, width, height);
         Tilemap colliderLayer = _maps[(int)TileMapType.Collider];
@@ -138,6 +143,7 @@ public class TileMaster : MonoBehaviour
         {
             for (int w = 0; w <= width - _tileDimensions; w += _tileDimensions)
             {
+                //TODO do some chunking, shit is wrong
                  Vector3Int idx = new Vector3Int(h, w, BaseLayout.BASE_LAYER_HEIGHT);
                  Vector2 pos = FromIsometricBasis(new Vector2(w, h)) + 
                                FromIsometricBasis(new Vector2(1, 1)) / 2;

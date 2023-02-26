@@ -33,8 +33,8 @@ public class Result<T, E>
 
     ResultType _value;
   
-    bool IsOk() => this._value is Ok<T>;
-    bool IsErr() => this._value is Err<E>;
+    public bool IsOk() => this._value is Ok<T>;
+    public bool IsErr() => this._value is Err<E>;
     public ResultType Case() => _value;
 
 

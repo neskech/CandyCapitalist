@@ -6,15 +6,16 @@ public class XcomEntityRunState : XcomEntityState
 {
     public override void OnEnter()
     {
+        StartTurn();
         Debug.Log("Entered Idle State!");
     }
 
-    public override void Update(Action action)
+    public override void Update(Action action, Transform entity)
     {
         _actionQueue.Enqueue(action);
 
         Action currentAction = _actionQueue.Dequeue();
-        FigureAction(currentAction);
+        FigureAction(currentAction, entity);
         CheckStateChange(currentAction);
     }
 
@@ -28,10 +29,10 @@ public class XcomEntityRunState : XcomEntityState
 
     public override void OnExit()
     {
-        Notify(EntityState.Running);
+        FinishTurn();
     }
 
-    void FigureAction(Action action)
+    void FigureAction(Action action, Transform entity)
     {
         if (action is Action.Run (var nextPos))
         {
@@ -39,7 +40,7 @@ public class XcomEntityRunState : XcomEntityState
         }
     }
 
-    IEnumerator StepToTile(Vector2Int nextPos)
+    IEnumerator StepToTile(Vector2Int nextPos, Transform entity)
     {
         //get the nextpos in world coordinates and gradually move towards it
         yield return null;

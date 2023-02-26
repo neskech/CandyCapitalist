@@ -1,59 +1,57 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Option;
-using static Option.Option;
-
-using HookFn = System.Func<EntityState, UnitType>;
 
 public record StateMachineConfig(EntityStats entityStats, Weapon weapon);
+public delegate Coroutine EnterCoroutine(IEnumerator routine);
 
 public class XcomEntityStateMachine
 {
    //vars
-   public Transform entity;
+   public Animator animator;
+
    public XcomEntityState currentState;
-   public Option<HookFn> hook;
-   public readonly IXcomCharacterController controller;
+
    public readonly XcomEntityStateFactory factory;
+
    public readonly StateMachineConfig config;
 
+   public readonly EnterCoroutine enterCoroutine;
 
-   public XcomEntityStateMachine(Transform entity, HookFn hook, StateMachineConfig config)
+   public XcomEntityStateMachine(StateMachineConfig config, EnterCoroutine enterCoroutine)
    {
        factory = new XcomEntityStateFactory();
        currentState = factory.GetState(EntityState.Idle);
-
-       this.hook = Some<HookFn>(hook);
        this.config = config;
-       this.entity = entity;
+       this.enterCoroutine = enterCoroutine;
    }
 
-   public XcomEntityStateMachine(Transform entity, StateMachineConfig config)
+   public void EnactAction(Action action, Transform entity)
    {
-       factory = new XcomEntityStateFactory();
-       currentState = factory.GetState(EntityState.Idle);
-
-       this.hook = None<HookFn>();
-       this.config = config;
-       this.entity = entity;
+        currentState.Update(action, entity);
+        EndTurn(entity);
    }
 
-   public void Update(Action action)
+   public void EnactActionPool(List<Action> actions, Transform entity)
    {
-        currentState.Update(action);
+        foreach (var act in actions)
+          currentState.Update(act, entity);
+        EndTurn(entity);
    }
 
-   public void FollowPath(List<Vector2Int> path)
+   public void EndTurn(Transform entity)
    {
-        //just add all the actions to the action queue of a state
-        //Once the state is done with all of the actions, it should
-        //Notify the monobehavior at the top 
-        //The monobehavior should call this function
+     currentState.Update(new Action.EndTurn(), entity);
    }
 
-   public void SetHook(HookFn hook)
+   public bool IsTurnOver()
    {
-        this.hook = Some<HookFn>(hook);
+     //TODO no hooks
+     //TODO Ishas IsFinishedTurn() which just calls this function
+
+     //TODO hook for tryTurn and bool func for taking turn
+     //TODO for this to work each turn must be followed by an EndTurn Action to force
+     //TODO the calling of EndState where we set the bool to true
+      return currentState.IsFinished();
    }
 }

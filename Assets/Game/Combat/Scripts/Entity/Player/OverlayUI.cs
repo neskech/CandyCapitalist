@@ -9,6 +9,8 @@ public class OverlayUI
 {
     Vector2Int _prevMouseTileCoords;
     Tilemap _overlayLayer;
+    //don't want to do A* every frame. Only do when mousetilepos moves
+    List<Vector2Int> _cachedPath; 
     public OverlayUI(Tilemap overlayLayer)
     {
         _overlayLayer = overlayLayer;
@@ -53,11 +55,12 @@ public class OverlayUI
         return true;
     }
 
-    Option<Tile> GetTileAtMouseCords()
+    Option<Tile> GetTileAtMouseCoords()
     {
         Vector3 mouseCords = Input.mousePosition;
         Vector2 worldPos = CameraController.Instance.Camera.ScreenToWorldPoint(mouseCords);
-        Vector3 tileCords = _overlayLayer.WorldToCell(worldPos);
+        //return GetTileAtCoords(worldPos);
+      //  Vector3 tileCords = _overlayLayer.WorldToCell(worldPos);
         //TODO want to find the tile with the HIGHEST Z coordinate given some (x, y) coordinates
         //TODO can either loop through vertically on all of tilemaster's tilemaps
         //TODO or can have tilemaster store a dict of the highest z tileas at each (x, y)

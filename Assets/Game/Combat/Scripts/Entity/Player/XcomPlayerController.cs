@@ -4,70 +4,171 @@ using UnityEngine.Tilemaps;
 using UnityEngine;
 using Option;
 using static Option.Option;
+using System;
 
-public class XcomPlayerController : MonoBehaviour, IXcomCharacterController
+public delegate void PlayerControllerHook(System.Collections.Generic.List<Action> actions);
+
+public class XcomPlayerController : MonoBehaviour
 {
+    //exposed
+    [SerializeField] LayerMask _entityMask;
+    [SerializeField] KeyCode _selectionKey;
+
     //vars
-    OverlayUI _overlayUI;
-    Vector2Int _transformTileCoords;
     XcomEntityStateMachine _stateMachine;
+    OverlayUI _overlayUI;
+
     EntityStats _stats;
     Weapon _weapon;
+    Option<PlayerControllerHook> _hook;
 
-    //TODO have a ref to the state machine 
-    //TODO and ability to click and move around with A*
+    bool _isSelected;
+
     // Start is called before the first frame update
     void Start()
     {
-        //TODO create an overlay tilemap to store overlay tiles
-        //TODO want to take advantage of batch rendering
-        
         GameObject[] objects = GameObject.FindGameObjectsWithTag("Overlay Layer");
         Debug.Assert(objects.Length == 1);
         Tilemap overlay = objects[0].GetComponent<Tilemap>();
 
         _overlayUI = new OverlayUI(overlay);
+        _hook = None<PlayerControllerHook>();
 
         StateMachineConfig config = new StateMachineConfig(_stats, _weapon);
-        _stateMachine = new XcomEntityStateMachine(transform, config);
+        _stateMachine = new XcomEntityStateMachine(config, StartCoroutine);
 
     }
 
-    // Update is called once per frame
+
     void Update()
     {
-        _overlayUI.Update(_transformTileCoords);
+        if (_isSelected)
+        {
+            Debug.Assert(_hook.IsSome());
+           // _overlayUI.Update(_transformTileCoords);
+            CheckAction();
+        }
     }
 
-    Option<List<Vector2Int>> FindPathFromTo(Vector2Int from, Vector2Int to)
+    void CheckAction()
     {
-        //TODO use the A* algo to find a path from 'from' to 'to'
-        //TODO if a path doesn't exist return none
-        return None<List<Vector2Int>>();
+        if (!Input.GetKeyDown(_selectionKey)) return;
 
-        //TODO after retrieving the path, the state machine should have a 'follow path' function
-        //TODO that walks the player along the path
+        //Handle case of attacking an enemy
+        if (HandleEntitySelected())
+            return;
+
+        //If not handle case of moving to a different tile
+        HandleTileSelected();
     }
 
-    //Interface methods
-    void UpdateTransformTileCoord()
+    bool HandleEntitySelected()
     {
-        //TODO update the _transformTileCoord property 
+        Option<GameObject> entity = EntityAtMousePos();
+        if (entity.IsSome())
+        {
+            GameObject ent = entity.Unwrap();
+
+            if (IsEnemy(ent))
+            {
+                XcomEnemyController c = ent.GetComponent<XcomEnemyController>();
+                Vector2Int pos = TileMaster.Instance.WorldToCellInt(c.transform.position).xy2D();
+
+                Action act = new Action.Attack(c.TakeDamage, pos);
+                List<Action> actions = new List<Action>(){act};
+                _hook.Unwrap()(actions);
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    public void EnterCoroutine(IEnumerator coroutine)
+    void HandleTileSelected()
     {
-        StartCoroutine(coroutine);
+        Vector2Int tileTransform = TileMaster.Instance.WorldToCellInt(transform.position).xy2D();
+        Vector3 mousePos = CameraController.Instance.Camera.ScreenToWorldPoint(Input.mousePosition);
+        Vector2Int tileMouse = TileMaster.Instance.WorldToCellInt(mousePos).xy2D();
+
+        //make sure both tile coordinates are in bounds of base layer
+        BoundsInt bounds = TileMaster.Instance.CellBounds; 
+        if (tileTransform.x < bounds.xMin || tileTransform.x >= bounds.xMax ||
+            tileTransform.y < bounds.yMin || tileTransform.y >= bounds.yMax)
+            return;
+
+        if (tileMouse.x < bounds.xMin || tileMouse.x >= bounds.xMax ||
+            tileMouse.y < bounds.yMin || tileMouse.y >= bounds.yMax)
+            return;
+
+        //generate a path from tileTransform to tilMouse
+        Result<List<Vector2Int>, PathNotFoundError> result = AStar.FindPath(
+                                            map: TileMaster.Instance.TileMapGrid, 
+                                            start: tileTransform,
+                                            end: tileMouse
+                                        );
+        if (result.IsErr()) return;
+
+        List<Vector2Int> path = result.Unwrap();
+
+        //if the path exists, make an action from it and call the hook
+        List<Action> actions = ActionPoolFromPath(path);
+        _hook.Unwrap()(actions);
     }
 
-    public Vector2Int GetPosition()
+    List<Action> ActionPoolFromPath(List<Vector2Int> path)
     {
-        return new();
+        List<Action> actions = new List<Action>();
+
+        /*
+            First element of path is always the current
+            position of the player
+        */
+        for (int i = 1; i < path.Count; i++)
+        {
+            actions.Add(new Action.Walk(path[i]));
+        }
+
+        return actions;
     }
+
+    public void TryTurn(PlayerControllerHook fn)
+    {
+        _hook = Some<PlayerControllerHook>(fn);
+    }
+
+    public void TakeTurn(List<Action> actions)
+    {
+        _stateMachine.EnactActionPool(actions, transform);
+    }   
 
     public void TakeDamage(float damage)
     {
 
     }
 
+    public void Select() 
+    {
+        _isSelected = true;
+    }
+    
+    public void DeSelect() 
+    {
+        _isSelected = false;
+        _hook = None<PlayerControllerHook>();
+    }
+
+    public bool IsTurnOver() => _stateMachine.IsTurnOver();
+
+    Option<GameObject> EntityAtMousePos()
+    {
+        Vector2 origin = CameraController.Instance.Camera.ScreenToWorldPoint(Input.mousePosition);
+        RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.zero, _entityMask);
+
+        if (hit)
+            return Some<GameObject>(hit.collider.gameObject);
+        return None<GameObject>();
+    }
+
+    bool IsPartyMember(GameObject obj) => obj.GetComponent<XcomPlayerController>() != null;
+    bool IsEnemy(GameObject obj) => obj.GetComponent<XcomEnemyController>() != null;
 }
