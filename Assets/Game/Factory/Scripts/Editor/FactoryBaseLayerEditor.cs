@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(BaseLayout))]
-public class BaseLayerEditor : Editor
+[CustomEditor(typeof(FactoryBaseLayer))]
+public class FactoryBaseLayerEditor : Editor
 {
-
     public override void OnInspectorGUI()
     {
         base.OnInspectorGUI();
@@ -23,3 +22,4 @@ public class BaseLayerEditor : Editor
         }
     }
 }
+

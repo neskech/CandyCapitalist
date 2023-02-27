@@ -2,17 +2,52 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Item : MonoBehaviour
+public struct Item
 {
-    // Start is called before the first frame update
-    void Start()
+    Sprite _sprite;
+    public Sprite Sprite => _sprite;
+
+
+    public Item(Sprite sprite)
     {
-        
+        _sprite = sprite;
     }
 
-    // Update is called once per frame
-    void Update()
+    public override bool Equals(object other)
     {
-        
+        throw new System.NotImplementedException();
+    }
+
+    public override int GetHashCode()
+    {
+        return base.GetHashCode();
+    }
+
+    public static bool operator ==(Item thisGuy, Item other) => thisGuy.Equals(other);
+    public static bool operator !=(Item thisGuy, Item other) => !thisGuy.Equals(other);
+}
+
+public struct ItemStack
+{
+    public Item item;
+    public int count;
+    public const int MAX_STACK_SIZE = 64;
+
+    bool TryAddItem(Item item)
+    {
+        if (this.item != item || count == MAX_STACK_SIZE)
+            return false;
+
+        count++;
+        return true;
+    }
+
+    bool TryRemoveItem()
+    {
+        if (count == 0)
+            return false;
+
+        count--;
+        return true;
     }
 }
