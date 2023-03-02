@@ -34,8 +34,8 @@ namespace Option
             _value = new None();
         }
 
-        bool IsSome() => this._value is Some<T>;
-        bool IsNone() => this._value is None;
+        public bool IsSome() => this._value is Some<T>;
+        public bool IsNone() => this._value is None;
         public Type Case() => _value;
 
 

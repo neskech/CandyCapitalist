@@ -52,4 +52,31 @@ public static class Vector3Extender
     {
         return new Vector3(v.x, v.z);
     }
+
+    ////
+    public static Vector2 xy2D(this Vector3 v)
+    {
+        return new Vector3(v.x, v.y);
+    }
+
+    public static Vector2 yx2D(this Vector3 v)
+    {
+        return new Vector3(v.y, v.x);
+    }
+
+    public static Vector2 yz2D(this Vector3 v)
+    {
+        return new Vector3(v.y, v.z);
+    }
+
+    public static Vector2 zx2D(this Vector3 v)
+    {
+        return new Vector3(v.z, v.x);
+    }
+
+    public static Vector2 xz2D(this Vector3 v)
+    {
+        return new Vector3(v.x, v.z);
+    }
+
 }
