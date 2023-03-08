@@ -16,8 +16,7 @@ public class IdentifierNotFoundError : Error
     }
 }
 
-
-public class TurnManager<Identifier> : MonoBehaviour where Identifier : System.IEquatable<Identifier>
+public class TurnManager : MonoBehaviour
 {
     enum TurnState 
     {
@@ -29,28 +28,42 @@ public class TurnManager<Identifier> : MonoBehaviour where Identifier : System.I
 
     [SerializeField] CameraController _camera;
     [SerializeField] float _delayAfterTurn;
+    [SerializeField] float _delayAfterTurnSequence;
     [SerializeField] LayerMask _focusableMask;
     
-    List<(Identifier, XcomPlayerController)> _party;
-    List<(Identifier, XcomEnemyController)> _enemies;
+    List<(int, XcomPlayerController)> _party;
+    List<(int, XcomEnemyController)> _enemies;
+    GameObject _partyContainer;
+    GameObject _enemyContainer;
     TurnState _turnState;
 
 
-    List<(Identifier, XcomPlayerController)> _partyCandidates;
+    List<(int, XcomPlayerController)> _partyCandidates;
     int currentPlayerOnFocus;
     bool _turnInProgress;
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
-        _party = new List<(Identifier, XcomPlayerController)>();
-        _enemies = new List<(Identifier, XcomEnemyController)>();
+        _party = new List<(int, XcomPlayerController)>();
+        _enemies = new List<(int, XcomEnemyController)>();
+
+        _partyContainer = new GameObject("Player Party Container");
+        _enemyContainer = new GameObject("Enemy Party Container");
+
+        _turnInProgress = false;
+        currentPlayerOnFocus = 0;
+        _partyCandidates = new List<(int, XcomPlayerController)>();
+
+        _turnState = TurnState.Finished;
     }
 
     // Update is called once per frame
     void Update()
     {
         UpdateCameraFocus();
+        if (_turnState == TurnState.Finished)
+            CommenceTurns(() => {Debug.Log("Finished Turn!");});
     }
 
     public void CommenceTurns(VoidHook fn)
@@ -63,25 +76,37 @@ public class TurnManager<Identifier> : MonoBehaviour where Identifier : System.I
         _turnState = TurnState.Start;
 
         yield return PartyTurn();
+        Debug.Log("ENEMY TURN TIME!!!!");
         yield return EnemyTurn();
 
         _turnState = TurnState.Finished;
 
         fn();
+
+        Debug.Assert(_partyCandidates.Count == 0);
+
+        yield return new WaitForSeconds(_delayAfterTurnSequence);
+        Debug.Log("ALLLL TURNSS OVERRRRRRRRRR!!!!");
     }
 
     IEnumerator PartyTurn()
     {
+        Debug.Log("Starting player turn");
+
        _turnState = TurnState.Player;
 
-       _partyCandidates = new List<(Identifier, XcomPlayerController)>(_party);
+       _partyCandidates = new List<(int, XcomPlayerController)>(_party);
+
+       currentPlayerOnFocus = 0;
+       _camera.JumpFocusTo(_partyCandidates[currentPlayerOnFocus].Item2.transform);
 
        while (_partyCandidates.Count > 0)
        {
 
             int currIdx = currentPlayerOnFocus;
-            var (_, controller) = _party[currIdx];
+            var (id, controller) = _partyCandidates[currIdx];
 
+            Debug.Log("Selected " + currIdx);
             controller.Select();
 
             bool tryingTurn = true;
@@ -100,8 +125,7 @@ public class TurnManager<Identifier> : MonoBehaviour where Identifier : System.I
             controller.DeSelect();
 
             //if we switched while we were still querying the turn, continue
-            if ((currIdx != currentPlayerOnFocus && tryingTurn) 
-                || todo.IsNone()) continue;
+            if ((currIdx != currentPlayerOnFocus && tryingTurn) || todo.IsNone()) continue;
 
             _turnInProgress = true;
 
@@ -110,12 +134,25 @@ public class TurnManager<Identifier> : MonoBehaviour where Identifier : System.I
             yield return new WaitUntil(() => controller.IsTurnOver());
             yield return new WaitForSeconds(_delayAfterTurn);
 
+            Debug.Log("It's all over!");
+            _partyCandidates.Remove((id, controller));
+
+            if (_partyCandidates.Count != 0)
+            {
+                Debug.Log("BEFORE!!! " + id + " " + currentPlayerOnFocus);
+                currentPlayerOnFocus %= _partyCandidates.Count;
+                Debug.Log("AFTER!!! " + id + " " + currentPlayerOnFocus);
+                _camera.JumpFocusTo(_partyCandidates[currentPlayerOnFocus].Item2.transform);
+            }
+
             _turnInProgress = false;
        }
     }
 
     IEnumerator EnemyTurn()
     {
+        Debug.Log("Starting enemy turn");
+
         _turnState = TurnState.Enemy;
 
        foreach (var (_, controller) in _enemies)
@@ -133,7 +170,7 @@ public class TurnManager<Identifier> : MonoBehaviour where Identifier : System.I
        }
     }
 
-    Result<T, Err_> GetIdFromList<T>(Identifier id, List<(Identifier, T)> ls)
+    Result<T, Err_> GetIdFromList<T>(int id, List<(int, T)> ls)
     {
          Result<T, Err_> ret = Err<T, Err_>(new Err_());
 
@@ -158,26 +195,30 @@ public class TurnManager<Identifier> : MonoBehaviour where Identifier : System.I
 
     }
 
-    Result<XcomPlayerController, Err_> GetPartyMemberWith(Identifier id)
+    Result<XcomPlayerController, Err_> GetPartyMemberWith(int id)
     {
         return GetIdFromList(id, _party);
     }
 
-    Result<XcomEnemyController, Err_> GetEnemyWith(Identifier id)
+    Result<XcomEnemyController, Err_> GetEnemyWith(int id)
     {
         return GetIdFromList(id, _enemies);
     }
 
-    public void SpawnPlayer(Identifier id, GameObject prefab, Vector3 pos, Quaternion rotation)
+    public void SpawnPlayer(int id, GameObject prefab, Vector2Int pos, Quaternion rotation)
     {
-        GameObject ret = Instantiate(prefab, pos, rotation);
+        Vector3 position = TileMaster.FromIsometricBasis(pos);
+        GameObject ret = Instantiate(prefab, position, rotation);
         _party.Add((id, ret.GetComponent<XcomPlayerController>()));
+        ret.transform.parent = _partyContainer.transform;
     }
 
-    public void SpawnEnemy(Identifier id, GameObject prefab, Vector3 pos, Quaternion rotation)
+    public void SpawnEnemy(int id, GameObject prefab, Vector2Int pos, Quaternion rotation)
     {
-        GameObject ret = Instantiate(prefab, pos, rotation);
+        Vector3 position = TileMaster.FromIsometricBasis(pos);
+        GameObject ret = Instantiate(prefab, position, rotation);
         _enemies.Add((id, ret.GetComponent<XcomEnemyController>()));
+        ret.transform.parent = _enemyContainer.transform;
     }
 
     void UpdateCameraFocus()
@@ -195,7 +236,8 @@ public class TurnManager<Identifier> : MonoBehaviour where Identifier : System.I
     {
         if (Input.GetKeyDown(KeyCode.O))
         {
-            currentPlayerOnFocus = (currentPlayerOnFocus - 1) % _partyCandidates.Count;
+            currentPlayerOnFocus = (currentPlayerOnFocus + _partyCandidates.Count - 1) % _partyCandidates.Count;
+            Debug.Log("Index left " + currentPlayerOnFocus);
             var (_, controller) = _partyCandidates[currentPlayerOnFocus];
             _camera.JumpFocusTo(controller.gameObject.transform);
 

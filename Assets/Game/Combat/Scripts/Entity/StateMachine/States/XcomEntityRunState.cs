@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class XcomEntityRunState : XcomEntityState
 {
+    public XcomEntityRunState(XcomEntityStateMachine root) : base(root)
+    {
+    }
+
     public override void OnEnter()
     {
         StartTurn();
@@ -12,9 +16,9 @@ public class XcomEntityRunState : XcomEntityState
 
     public override void Update(Action action, Transform entity)
     {
-        _actionQueue.Enqueue(action);
+        EnqueueAction(action);
 
-        Action currentAction = _actionQueue.Dequeue();
+        Action currentAction = DequeueAction();
         FigureAction(currentAction, entity);
         CheckStateChange(currentAction);
     }

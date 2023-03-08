@@ -87,10 +87,10 @@ public class CameraController : MonoBehaviour
         if (_allowZoom)
             HandleZoom();
         
-        if (_onFocus)
-            LerpToTarget();
+        // if (_onFocus)
+        //     LerpToTarget();
 
-        FixBounds();
+        //FixBounds();
     }       
 
     void TryToFocus()

@@ -79,4 +79,23 @@ public static class Vector3Extender
         return new Vector3(v.x, v.z);
     }
 
+    public static Vector3Int CeilToInt3D(this Vector3 v)
+    {
+        return new Vector3Int(Mathf.CeilToInt(v.x), Mathf.CeilToInt(v.y), Mathf.CeilToInt(v.z));
+    }
+
+    public static Vector3Int FloorToInt3D(this Vector3 v)
+    {
+        return new Vector3Int(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y), Mathf.FloorToInt(v.z));
+    }
+
+    public static Vector2Int CeilToInt2D(this Vector3 v)
+    {
+        return new Vector2Int(Mathf.CeilToInt(v.x), Mathf.CeilToInt(v.y));
+    }
+
+    public static Vector2Int FloorToInt2D(this Vector3 v)
+    {
+        return new Vector2Int(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y));
+    }
 }

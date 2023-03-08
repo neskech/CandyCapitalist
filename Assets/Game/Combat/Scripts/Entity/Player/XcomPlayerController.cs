@@ -13,6 +13,7 @@ public class XcomPlayerController : MonoBehaviour
     //exposed
     [SerializeField] LayerMask _entityMask;
     [SerializeField] KeyCode _selectionKey;
+    [SerializeField] Tile _overlayTile;
 
     //vars
     XcomEntityStateMachine _stateMachine;
@@ -31,11 +32,11 @@ public class XcomPlayerController : MonoBehaviour
         Debug.Assert(objects.Length == 1);
         Tilemap overlay = objects[0].GetComponent<Tilemap>();
 
-        _overlayUI = new OverlayUI(overlay);
+        _overlayUI = new OverlayUI(overlay, _overlayTile);
         _hook = None<PlayerControllerHook>();
 
         StateMachineConfig config = new StateMachineConfig(_stats, _weapon);
-        _stateMachine = new XcomEntityStateMachine(config, StartCoroutine);
+        _stateMachine = new XcomEntityStateMachine(config, StartCoroutine, GetComponent<Animator>());
 
     }
 
@@ -45,9 +46,13 @@ public class XcomPlayerController : MonoBehaviour
         if (_isSelected)
         {
             Debug.Assert(_hook.IsSome());
-           // _overlayUI.Update(_transformTileCoords);
+            Vector2Int transformTileCoords = TileMaster.WorldToCellInt(transform.position).xy2D();
+            _overlayUI.Update(transformTileCoords);
             CheckAction();
         }
+
+        if (_stateMachine.IsTurnPlaying())
+            _stateMachine.Update(transform);
     }
 
     void CheckAction()
@@ -72,7 +77,7 @@ public class XcomPlayerController : MonoBehaviour
             if (IsEnemy(ent))
             {
                 XcomEnemyController c = ent.GetComponent<XcomEnemyController>();
-                Vector2Int pos = TileMaster.Instance.WorldToCellInt(c.transform.position).xy2D();
+                Vector2Int pos = TileMaster.WorldToCellInt(c.transform.position).xy2D();
 
                 Action act = new Action.Attack(c.TakeDamage, pos);
                 List<Action> actions = new List<Action>(){act};
@@ -86,9 +91,9 @@ public class XcomPlayerController : MonoBehaviour
 
     void HandleTileSelected()
     {
-        Vector2Int tileTransform = TileMaster.Instance.WorldToCellInt(transform.position).xy2D();
+        Vector2Int tileTransform = TileMaster.ToIsometricBasis(transform.position).CeilToInt();
         Vector3 mousePos = CameraController.Instance.Camera.ScreenToWorldPoint(Input.mousePosition);
-        Vector2Int tileMouse = TileMaster.Instance.WorldToCellInt(mousePos).xy2D();
+        Vector2Int tileMouse = TileMaster.ToIsometricBasis(mousePos).CeilToInt();
 
         //make sure both tile coordinates are in bounds of base layer
         BoundsInt bounds = TileMaster.Instance.CellBounds; 
@@ -106,9 +111,14 @@ public class XcomPlayerController : MonoBehaviour
                                             start: tileTransform,
                                             end: tileMouse
                                         );
+
+
         if (result.IsErr()) return;
 
         List<Vector2Int> path = result.Unwrap();
+
+        foreach (var v in path)
+            Debug.Log(v);
 
         //if the path exists, make an action from it and call the hook
         List<Action> actions = ActionPoolFromPath(path);
@@ -123,7 +133,7 @@ public class XcomPlayerController : MonoBehaviour
             First element of path is always the current
             position of the player
         */
-        for (int i = 1; i < path.Count; i++)
+        for (int i = 0; i < path.Count; i++)
         {
             actions.Add(new Action.Walk(path[i]));
         }

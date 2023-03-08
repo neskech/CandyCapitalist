@@ -26,7 +26,7 @@ public enum Heuristic
 public static class AStar 
 {
     #pragma warning disable
-    struct Node 
+    class Node 
     {
         public TileData data;
         public float cost;
@@ -49,14 +49,16 @@ public static class AStar
     }
     #pragma warning restore
 
-    const Heuristic HEURISTIC = Heuristic.Euclidian;
-    const int MAX_Z_DELTA = 2; 
+    const Heuristic HEURISTIC = Heuristic.Manhattan;
+    const int MAX_Z_DELTA = 4; 
     const bool ALLOW_DIAGONALS = false;
 
     static Node[,] _modifiedMap;
 
     public static Result<Path, PathNotFoundError> FindPath(TileData[,] map, Vector2Int start, Vector2Int end)
     {
+        Debug.Log("Start A*! with end -- x: " + end.x + " y: " + end.y + "-- and start + x: " + start.x + " y: " + start.y );
+
         ModifyMapData(map);
 
         Node _start = GetNodeAt(start);
@@ -67,6 +69,7 @@ public static class AStar
         HashSet<Node> frontier = new HashSet<Node>();
 
         q.Enqueue(_start, 0);
+        frontier.Add(_start);
 
         while (q.Count != 0)
         {
@@ -77,23 +80,27 @@ public static class AStar
 
             //check solution
             if (curr == _end)
+            {
+                Debug.Log("Sucesss!");
                 return Ok<Path, Err>(PathFromParentPointers(curr));
+            }
+
 
             //check adjacents
             Option<Node>[] adjacents = GetAdjacent(curr);
             foreach (Option<Node> adj in adjacents)
             {
                 if (adj.IsNone() || explored.Contains(adj.Unwrap())) continue;
-                
                 Node n = adj.Unwrap();
 
-                int zDelta = Mathf.Abs(curr.data.Index.z - adj.Unwrap().data.Index.z);
-                if (zDelta >= MAX_Z_DELTA) continue;
+                // int zDelta = Mathf.Abs(curr.data.Index.z - adj.Unwrap().data.Index.z);
+                // if (zDelta >= MAX_Z_DELTA) continue;
 
+                float heuristic = GetHeuristic(n.data.Index.xy2D(), end, HEURISTIC);
+                float newCost = curr.cost + 1 + heuristic;
 
                 if (frontier.Contains(n))
                 {
-                    float newCost = curr.cost + 1 + GetHeuristic(n.data.Index.xy2D(), end, HEURISTIC);
                     if (newCost < n.cost)
                     {
                         n.cost = newCost;
@@ -103,7 +110,8 @@ public static class AStar
                 else
                 {
                     frontier.Add(n);
-                    n.cost = curr.cost + 1 + GetHeuristic(n.data.Index.xy2D(), end, HEURISTIC);
+                    n.cost = newCost;
+                    q.Enqueue(n, n.cost);
                     n.parent = Some<Node>(curr);
                 }
             }
@@ -116,6 +124,7 @@ public static class AStar
         //TODO max Z Delta determines the HEIGHT the agent can step
         //TODO so if my current tile has z index 0 and the next in the path has z index 10 
         //TODO then the delta is 10. If my max allowable delta is 6 then we can't make that jump
+        Debug.Log("Failure!!");
         return Err<Path, Err>(new Err());
     }
 
@@ -129,21 +138,44 @@ public static class AStar
 
     static void ModifyMapData(TileData[,] data)
     {
-        if (_modifiedMap != null) return;
+        if (_modifiedMap != null) 
+        {
+            for (int r = 0; r < data.GetLength(0); r++)
+            {
+                for (int c = 0; c < data.GetLength(1); c++)
+                {
+                    _modifiedMap[r, c].cost = 0.0f;
+                    _modifiedMap[r, c].parent = None<Node>();
+                }
+            }
+
+            return;
+        }
 
         //goal is to be able to use 2D indices of tileMap to index into
         //The data array
+        Debug.Assert(_modifiedMap == null);
+
+        _modifiedMap = new Node[data.GetLength(0), data.GetLength(1)];
+
+        for (int r = 0; r < data.GetLength(0); r++)
+        {
+            for (int c = 0; c < data.GetLength(1); c++)
+            {
+                _modifiedMap[r, c] = new Node(data[r, c], 0.0f, None<Node>());
+            }
+        }
     }
 
     static Node GetNodeAt(Vector2Int coords)
     {
-        return _modifiedMap[coords.y, coords.x];
+        return _modifiedMap[coords.x, coords.y];
     }
 
     static List<Vector2Int> PathFromParentPointers(Node node)
     {
-        List<Vector2Int> path = new List<Vector2Int>();
 
+        List<Vector2Int> path = new List<Vector2Int>();
         while (node.parent.IsSome())
         {
             Vector2Int pos = node.data.Index.xy2D();
@@ -165,9 +197,10 @@ public static class AStar
         for (int a = 0; a < 4; a++)
         {
             Vector2Int newPos = currPos + new Vector2Int(adj[a], adj[3 - a]);
+
             //TODO check what axis the dimensions of the array are
-            if (newPos.x >= 0 && newPos.x < _modifiedMap.GetLength(0)
-                && newPos.y >= 0 && newPos.y < _modifiedMap.GetLength(1))
+            if (newPos.x >= 0 && newPos.x < _modifiedMap.GetLength(1)
+                && newPos.y >= 0 && newPos.y < _modifiedMap.GetLength(0))
                 nodes[a] = Some<Node>(GetNodeAt(newPos));
             else
                 nodes[a] = None<Node>();

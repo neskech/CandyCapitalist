@@ -52,7 +52,7 @@ public class PlayerCamera : MonoBehaviour
         float det = 1 / Mathf.Abs(v1.x * v2.y - v2.x * v1.y);
 
         float orthographicWidth = _cam.orthographicSize * _cam.aspect;
-        orthographicWidth /= 2;
+        orthographicWidth /= 2; 
 
         //clamp it to...
         isoCords.x = Mathf.Clamp(isoCords.x, det * orthographicWidth, _baseLayer.baseLayer.cellBounds.xMax);

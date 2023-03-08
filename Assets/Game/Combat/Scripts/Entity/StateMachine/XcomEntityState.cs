@@ -10,17 +10,17 @@ public abstract record Action()
     public record Run(Vector2Int nextPos) : Action;
     public record Attack(DamageFn damageFn, Vector2Int pos) : Action;
     public record EndTurn() : Action;
+    public record NullAction() : Action;
 }
 
 public abstract class XcomEntityState
 {
-    protected bool _isFinished;
+    private bool _isFinished;
     protected XcomEntityStateMachine _root;
-    protected Queue<Action> _actionQueue;
 
-    public XcomEntityState()
+    public XcomEntityState(XcomEntityStateMachine root)
     {
-          _actionQueue = new Queue<Action>();
+          _root = root;
     }
 
     public abstract void OnEnter();
@@ -32,10 +32,13 @@ public abstract class XcomEntityState
     {
         OnExit();
         _root.currentState = _root.factory.GetState(state);
+        _root.currentState.OnEnter();
     }
 
-    protected void FinishTurn() => _isFinished = true;
-    protected void StartTurn() => _isFinished = false;
+    protected void EnqueueAction(Action action) => _root._actionQueue.Enqueue(action);
+    protected Action DequeueAction() => _root._actionQueue.Dequeue();
+    protected void FinishTurn() => _root.isFinished = true;
+    protected void StartTurn() => _root.isFinished = false;
 
     public bool IsFinished() => _isFinished;
     

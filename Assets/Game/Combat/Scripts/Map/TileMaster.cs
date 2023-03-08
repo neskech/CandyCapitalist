@@ -28,6 +28,7 @@ public class TileMaster : MonoBehaviour
     //private vars
     Tilemap[] _maps;
     TileData[,] _tiles;
+    Dictionary<Vector2Int, int> _zMap;
     Grid _grid;
     Vector2 _gridBasisUp;
     Vector2 _gridBasisRight;
@@ -40,8 +41,10 @@ public class TileMaster : MonoBehaviour
     public Vector3 CellSize {get => _maps[(int)TileMapType.BaseLayer].cellSize;}
     public BoundsInt CellBounds {get => _maps[(int)TileMapType.BaseLayer].cellBounds;}
     public int TileDimensions {get => _tileDimensions;}
-    public Vector3Int WorldToCellInt(Vector3 world) => Instance._maps[(int)TileMapType.BaseLayer].WorldToCell(world);
+    public static Vector3Int WorldToCellInt(Vector3 world) => Instance._maps[(int)TileMapType.BaseLayer].WorldToCell(world);
     public TileData[,] TileMapGrid => _tiles;
+    public static Tilemap BaseLayer => Instance._maps[(int)TileMapType.BaseLayer];
+    public static Dictionary<Vector2Int, int> zMap => Instance._zMap;
 
 
     TileMaster() 
@@ -60,6 +63,7 @@ public class TileMaster : MonoBehaviour
     {
         _maps = new Tilemap[(int)TileMapType.NUM_CLASSES];
         _grid = GetComponent<Grid>();
+        _zMap = new Dictionary<Vector2Int, int>();
 
         if (_autoUpdate || _drawGizmos)
              Setup();
@@ -143,12 +147,22 @@ public class TileMaster : MonoBehaviour
         {
             for (int w = 0; w <= width - _tileDimensions; w += _tileDimensions)
             {
-                //TODO do some chunking, shit is wrong
+
+                 bool isSolid = true;
+                 for (int i = 0; i < _tileDimensions; i++) 
+                 {
+                    for (int j = 0; j < _tileDimensions; j++)
+                    {
+                        Vector3Int id = new Vector3Int(h + i, w + j, BaseLayout.BASE_LAYER_HEIGHT);
+                        isSolid = isSolid && baseLayer.HasTile(id);
+                    }
+                 }
+
                  Vector3Int idx = new Vector3Int(h, w, BaseLayout.BASE_LAYER_HEIGHT);
                  Vector2 pos = FromIsometricBasis(new Vector2(w, h)) + 
                                FromIsometricBasis(new Vector2(1, 1)) / 2;
 
-                 TileType isBlocker = baseLayer.HasTile(idx) ? TileType.Free : TileType.Blocker;
+                 TileType isBlocker = isSolid ? TileType.Free : TileType.Blocker;
                  _tiles[h, w] = new TileData(pos, idx, isBlocker);
             }
                        
@@ -159,6 +173,7 @@ public class TileMaster : MonoBehaviour
     void SetupColliderLayer(Tilemap colliderLayer, int width, int height)
     {
         BoundsInt bounds = colliderLayer.cellBounds;
+        Debug.Log(bounds.min.z + " " + bounds.max.z);
 
         for (int z = bounds.min.z; z < bounds.max.z; z++)
         {
@@ -176,7 +191,18 @@ public class TileMaster : MonoBehaviour
                                 {
                                     _tiles[h / _tileDimensions, w / _tileDimensions].SwitchToBlocker();
                                 } 
-                        
+
+                                //add the highest guy on the z axis as well
+                                if (colliderLayer.HasTile(idx) || BaseLayer.HasTile(idx))
+                                {
+                                    Vector2Int e = idx.xy2D().yx();
+                                    int addZ = colliderLayer.HasTile(idx) ? z + 1 : z;
+
+                                    if (_zMap.ContainsKey(e))
+                                         _zMap.Remove(e);
+
+                                    _zMap.Add(e, addZ);
+                                }
                         }
                     }
 
@@ -216,7 +242,7 @@ public class TileMaster : MonoBehaviour
                 Gizmos.color = _tiles[h, w].IsClear() ? Color.white : Color.red;
                 Vector3 pos = new Vector3(_tiles[h, w].BottomRight().x, _tiles[h, w].BottomRight().y, 10);
                 Gizmos.DrawSphere(_tiles[h, w].WorldPosCenter, 0.09f);
-                   
+                
             }
         }
     }
